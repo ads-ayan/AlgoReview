@@ -7,6 +7,10 @@
 typedef struct tree {
 	int item;
 	int height;
+	//add'tl info for node count
+	int lCount;
+	int rCount;
+
 	tree *left;
 	tree *right;
 } tree;
@@ -23,11 +27,16 @@ void recalc(tree *p) {
 	p->height = 1 + max(height(p->left), height(p->right));
 }
 
+int getCount(tree *p) {
+	return p ? (p->lCount + p->rCount + 1) : 0;
+}
+
 tree *rotate_right(tree *p) {
 	tree *q = p->left;
 	p->left = q->right;
+	p->lCount = getCount(p->left);
 	q->right = p;
-
+	q->rCount = getCount(q->right);
 	recalc(p);
 	recalc(q);
 
@@ -37,8 +46,9 @@ tree *rotate_right(tree *p) {
 tree *rotate_left(tree *p) {
 	tree *q = p->right;
 	p->right = q->left;
+	p->rCount = getCount(p->right);
 	q->left = p;
-
+	q->lCount = getCount(q->left);
 	recalc(p);
 	recalc(q);
 
@@ -77,6 +87,17 @@ tree *search_item(tree *p, int x) {
 	}
 }
 
+tree *search_kth_item(tree *p, int k) {
+	if (p == NULL) return NULL;
+	if (p->lCount + 1 == k) return p;
+	if (k > p->lCount) {
+		return search_kth_item(p->right, k - (p->lCount + 1));
+	}
+	else {
+		return search_kth_item(p->left, k);
+	}
+}
+
 tree *find_min(tree *p) {
 	tree *min;
 
@@ -90,6 +111,19 @@ tree *find_min(tree *p) {
 	return min;
 }
 
+tree *find_max(tree *p) {
+	tree *max;
+
+	if (p == NULL) return NULL;
+
+	max = p;
+	while (max->right != NULL) {
+		max = max->right;
+	}
+
+	return max;
+}
+
 tree *insert_tree(tree *p, int x) {
 	tree *t;
 
@@ -98,14 +132,18 @@ tree *insert_tree(tree *p, int x) {
 		t->item = x;
 		t->left = t->right = NULL;
 		t->height = 1;
+		t->lCount = 0;
+		t->rCount = 0;
 		p = t;
 		return p;
 	}
 
 	if (x < p->item) {
+		p->lCount++;
 		p->left = insert_tree(p->left, x);
 	}
 	else if (x > p->item) {
+		p->rCount++;
 		p->right = insert_tree(p->right, x);
 	}
 
@@ -154,7 +192,13 @@ int _tmain(int argc, _TCHAR* argv[])
 	t = insert_tree(t, 7);
 	t = insert_tree(t, 8);
 
-	t = remove_item(t, 2);
+	//t = remove_item(t, 2);
+	tree *m = find_min(t);
+	tree *mx = find_max(t);
+	tree *f = search_kth_item(t, 3);
+	tree *s = search_kth_item(t, 6);
+
+
 	return 0;
 }
 
