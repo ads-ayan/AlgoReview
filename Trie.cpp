@@ -59,6 +59,7 @@ void insert(trieNode *root, char *key, int val) {
 	}
 
 	pcrawl->isEndofWord = 1;
+	pcrawl->val = val;
 }
 
 int search(trieNode *root, char *key) {
@@ -146,14 +147,87 @@ int del(trieNode *root, char *key, int level, int len) {
 	return 0;
 }
 
+int getOneSubstring(trieNode *root, char *key) {
+	int index;
+	trieNode *pcrawl = root;
+
+	while (*key != '\0') {
+		index = CHAR_TO_INDEX(*key);
+		if (!pcrawl->children[index]) return false;
+
+		pcrawl = pcrawl->children[index];
+		key++;
+	}
+
+	while (pcrawl != NULL && pcrawl->isEndofWord == 0) {
+		for (int i = 0; i < ALPHA_SIZE; i++) {
+			if (pcrawl->children[i] != NULL) {
+				pcrawl = pcrawl->children[i];
+				break;
+			}
+		}
+	}
+
+	return (pcrawl != NULL && pcrawl->isEndofWord);
+}
+
+int deleteallSubstring(trieNode *root, char *key, int level, int len) {
+	if (root) {
+		if (level == len) {
+			if (root->isEndofWord) {
+				root->isEndofWord = 0;
+
+				if (isFree(root)) {
+					return 1;
+				}
+
+				return 0;
+			}
+			else {
+				int forDelete = 0;
+				for (int i = 0; i < ALPHA_SIZE; i++) {
+					if (root->children[i] != NULL) {
+						if (deleteallSubstring(root->children[i], key, len, len)) {
+							printf("%d\n", root->children[i]->val);
+							free(root->children[i]);
+							root->children[i] = NULL;
+							root->nchild--;
+							forDelete = 1;
+						}
+					}
+				}
+				return forDelete;
+			}
+		}
+		else {
+			int index = CHAR_TO_INDEX(key[level]);
+
+			if (deleteallSubstring(root->children[index], key, level + 1, len)) {
+				if ((root->children[index]->isEndofWord == 0) && isFree(root->children[index])) {
+					free(root->children[index]);
+					root->children[index] = NULL;
+					root->nchild--;
+				}
+				root->ndescendants--;
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	trieNode *start = getNode(-1);
 	insert(start, "ads", 1);
 	insert(start, "adrian", 2);
-	insert(start, "in", 3);
+	insert(start, "inuyasha", 3);
 	insert(start, "insert", 4);
 	insert(start, "inn", 5);
+	insert(start, "instagram", 6);
+	getOneSubstring(start, "ins");
+	deleteallSubstring(start, "ins",0,3);
 	printf("%s %s\n", "ads", search(start, "ads") ? "Present in trie" : "Not present in trie");
 	printf("%s %s\n", "add", search(start, "add") ? "Present in trie" : "Not present in trie");
 	del(start, "ads", 0, strlen("ads"));
