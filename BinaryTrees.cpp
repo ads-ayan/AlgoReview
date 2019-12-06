@@ -36,7 +36,7 @@ tree *rotate_right(tree *p) {
 	p->left = q->right;
 	p->lCount = getCount(p->left);
 	q->right = p;
-	q->rCount = getCount(q->right);
+	q->rCount = getCount(p);
 	recalc(p);
 	recalc(q);
 
@@ -48,7 +48,7 @@ tree *rotate_left(tree *p) {
 	p->right = q->left;
 	p->rCount = getCount(p->right);
 	q->left = p;
-	q->lCount = getCount(q->left);
+	q->lCount = getCount(p);
 	recalc(p);
 	recalc(q);
 
@@ -178,7 +178,67 @@ tree *remove_item(tree *p, int x) {
 
 	return balance(p);
 }
+tree *insert_to_kth(tree *p, int k, int value) {
+	tree *t;
+	if (p == NULL) {
+		t = (tree*)malloc(sizeof(tree));
+		t->height = 1;
+		t->left = t->right = NULL;
+		t->lCount = 0;
+		t->rCount = 0;
+		t->value = value;
+		p = t;
+		return p;
+	}
 
+	if (k > p->lCount + 1) {
+		p->rCount++;
+		p->right = insert_to_kth(p->right, k - (p->lCount +1), value);
+	}
+	else {
+		p->lCount++;
+		p->left = insert_to_kth(p->left, k, value);
+	}
+
+	return balance(p);
+}
+
+tree *remove_kth_item(tree *p, int k) {
+	if (p == NULL) return p;
+	if (k < p->lCount + 1) {
+		p->lCount--;
+		p->left = remove_kth_item(p->left, k);
+	}
+	else if (k > p->lCount + 1) {
+		p->rCount--;
+		p->right = remove_kth_item(p->right, k - (p->lCount + 1));
+	}
+	else {
+		if (p->left == NULL) {
+			tree *temp = p->right;
+			free(p);
+			return temp;
+		}
+		else if (p->right == NULL) {
+			tree *temp = p->left;
+			free(p);
+			return temp;
+		}
+
+		tree *min = find_min(p->right);
+		p->value = min->value;
+		p->rCount--;
+		p->right = remove_kth_item(p->right, 1);
+	}
+	return balance(p);
+}
+
+void print(tree *p) {
+	if (p == NULL) return;
+	print(p->left);
+	printf("%d\n", p->value);
+	print(p->right);
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
